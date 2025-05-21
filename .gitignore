@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+.*_env/
+*_env/
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# Data files
+csv/CalculatedVolatility/
+csv/MergedData/
+csv/Statistics/
+# 元データも無視する場合 (必要に応じてコメントアウト解除)
+# csv/EconomicIndicators/
+# csv/Zigzag-data/
+
+
+# Log files
+*.log
+execution.log
+
+# Plot images
+plots/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# OS generated files
+.DS_Store
+Thumbs.db
