@@ -123,13 +123,47 @@ def main():
         print(f"Filtered out {len(merged_df) - len(filtered_df)} problematic event names.")
         merged_df = filtered_df
     
+    # 数値の小数点以下の桁数を制限する処理
+    numeric_cols = ['Forecast', 'Actual', 'PriceMovement', 'MaxHigh_in_Range', 'MinLow_in_Range']
+    for col in numeric_cols:
+        if col in merged_df.columns:
+            # 小数点以下3桁に制限
+            merged_df[col] = merged_df[col].apply(lambda x: round(float(x), 3) if pd.notnull(x) else x)
+    
+    # デバッグ用：データの一部をプレビュー表示
+    print("\n===== データプレビュー =====")
+    # 1. 通貨別にボラティリティデータの平均値を計算して表示
+    print("\n1. 通貨別ボラティリティ平均:")
+    currency_volatility = merged_df.groupby('Currency')['PriceMovement'].mean().sort_values(ascending=False)
+    for currency, mean_volatility in currency_volatility.items():
+        if pd.notnull(mean_volatility):
+            print(f"{currency}: {mean_volatility:.3f}")
+
+    # 2. 経済指標のサンプルデータを表示（数値の整形済み）
+    print("\n2. 経済指標サンプル（各通貨の最初の5件）:")
+    for currency in merged_df['Currency'].unique()[:5]:  # 最初の5通貨のみ
+        currency_data = merged_df[merged_df['Currency'] == currency].head(3)  # 各通貨の最初の3件
+        print(f"\n-- {currency} --")
+        for _, row in currency_data.iterrows():
+            if pd.notnull(row['Actual']) and pd.notnull(row['PriceMovement']):
+                print(f"日時: {row['Date_JST']} {row['TimeRange_JST']}, イベント: {row['EventName']}")
+                print(f"  予測: {row['Forecast']:.3f}, 実績: {row['Actual']:.3f}, 変動幅: {row['PriceMovement']:.3f}")
+    
+    # 3. 価格変動が大きい（上位10件）経済指標イベントを表示
+    print("\n3. 価格変動が最も大きい経済指標イベント:")
+    top_volatility = merged_df.sort_values('PriceMovement', ascending=False).head(10)
+    for _, row in top_volatility.iterrows():
+        if pd.notnull(row['PriceMovement']):
+            print(f"{row['Date_JST']} {row['TimeRange_JST']} {row['Currency']} {row['EventName']}: {row['PriceMovement']:.3f}")
+
     # 出力
     output_dir = os.path.dirname(OUTPUT_PATH)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
     
-    merged_df.to_csv(OUTPUT_PATH, index=False)
-    print(f"Merged data saved to {OUTPUT_PATH}")
+    # 小数点以下の桁数を制限して出力
+    merged_df.to_csv(OUTPUT_PATH, index=False, float_format='%.3f')
+    print(f"\nMerged data saved to {OUTPUT_PATH}")
     print(f"Final record count: {len(merged_df)}")
     
     # マージ結果のサマリを表示
